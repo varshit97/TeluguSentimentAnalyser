@@ -33,6 +33,7 @@ with codecs.open('telugu-part-of-speech-tagger/telugu.input.txt','rwa+', encodin
     for i in sys.argv[1:]:
         f.write(i.decode('utf-8'))
         f.write(" ")
+f.close()
 
 os.system("cd telugu-part-of-speech-tagger; make tag")
 
@@ -53,6 +54,69 @@ for j in posSynSet.values():
         if k[1] in j:
             presIndex = posSynSet.values().index(j)
             k.append(posSynSet.keys()[presIndex])
-            
+
+advFile = open('finalAdvSenti', 'r')
+adjFile = open('finalAdjSenti', 'r')
+advSentiment = 1
+adjSentiment = 1
+
+adjs = adjFile.readlines()
+adjFile.close()
+advs = advFile.readlines()
+advFile.close()
+
 for i in posTag:
-    print i[0].decode('utf-8'),i[1],i[2]
+    if i[2] == 'adjective':
+        f = open('adjectives.lemma','r')
+        for line in f:
+            tempData = line.split(' ')[1]
+            if tempData.split('.')[1].strip() == '0':
+                tempData = tempData.split('.')[0].encode('utf-8')
+            if i[0] == tempData.strip():
+                for j in adjs:
+                    adj = j.split(';')[0].encode('utf-8')
+                    #print tempData, adj, 'adj'
+                    if tempData.strip() == adj.strip():
+                        value = float(j.split(';')[1].strip().split(' ')[-2].strip())
+                        wordType = j.split(';')[1].strip().split(' ')[-1].strip()
+                        if wordType == 'Negative':
+                            value *= -1
+                        print 'ADJ Inside: ', adj.strip(), value
+                        #print 'adj valu : ', value
+                        adjSentiment = value/100.0
+                        #print 'ADJS: ', adjSentiment
+                        #adjQuality = line.split(' ')[-1]
+                print 'ADJ Outside : ', tempData, ' ', adj
+    if i[2] == 'adverb':
+        g = open('adverbs.lemma','r')
+        for line in g:
+            tempData = line.split(' ')[1]
+            if tempData.split('.')[1].strip()=='0':
+                tempData = tempData.split('.')[0].encode('utf-8')
+            if i[0] == tempData.strip():
+                for j in advs:
+                    adv = j.split(';')[0].encode('utf-8')
+                    #print tempData, adv, 'adv'
+                    if tempData.strip() == adv.strip():
+                        value = float(j.split(';')[1].strip().split(' ')[-2].strip())
+                        wordType = j.split(';')[1].strip().split(' ')[-1].strip()
+                        if wordType == 'Negative':
+                            value *= -1
+                        print 'ADV Inside: ', adv.strip(), value
+                        #print 'adv valu : ', value
+                        advSentiment = value/100.0
+                        #print 'ADVS: ', advSentiment
+                        #advQuality = line.split(' ')[-1]
+                print 'ADV Outside : ', tempData, ' ', adv
+
+if advSentiment > 0.3:
+    if adjSentiment > 0:
+        sentenceSentiment = adjSentiment + ((1 - adjSentiment) * advSentiment)
+    else:
+        sentenceSentiment = adjSentiment - ((1 - adjSentiment) * advSentiment)
+else:
+    if adjSentiment < 0:
+        sentenceSentiment = adjSentiment - ((1 - adjSentiment) * advSentiment)
+    else:
+        sentenceSentiment = adjSentiment + ((1 - adjSentiment) * advSentiment)
+print sentenceSentiment
