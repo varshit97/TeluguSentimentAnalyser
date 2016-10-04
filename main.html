@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Sentimental Analyser</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+	</head>
+	<body>
+		<h3>This is a test</h3>
+		<input type="button" id="button" value="Hello">
+		<script type="text/javascript" src="jquery-1.8.0.min.js"></script>
+		<script type="text/javascript" src="jsapi"></script>
+		<script type="text/javascript" charset="utf-8">
+		$("#button").click(function(){
+			$.ajax({
+			    url: "http://127.0.0.1:5000/sentiment", 
+			    type: "POST",
+			    contentType: "application/json",
+			    data: JSON.stringify({'inputVar': myFunc()}),
+			    success: function(data){ 
+				alert(data['data']);
+			    } 
+			});
+		});
+		function myFunc()
+		{
+		  var val = document.getElementById('transliterateTextarea').value;
+		  console.log(val);
+		  return val;
+		}
+		</script>
+		<script type="text/javascript">
+			// Load the Google Transliterate API
+			google.load("elements", "1", {
+				packages: "transliteration"
+			});
+		    function onLoad() {
+				var options = {
+				    sourceLanguage:
+				        google.elements.transliteration.LanguageCode.ENGLISH,
+				    destinationLanguage:
+				        [google.elements.transliteration.LanguageCode.TELUGU],
+				    shortcutKey: 'ctrl+g',
+				    transliterationEnabled: true
+				};
+	
+			// Create an instance on TransliterationControl with the required
+			// options.
+				var control = new google.elements.transliteration.TransliterationControl(options);
+	
+			// Enable transliteration in the textbox with id
+			// 'transliterateTextarea'.
+				control.makeTransliteratable(['transliterateTextarea']);
+			}
+			google.setOnLoadCallback(onLoad);
+		</script>
+		<textarea id="transliterateTextarea" style="width:600px;height:200px">thopu</textarea>
+		<h3 id="tempHello"></h3>
+	</body>
+</html>
