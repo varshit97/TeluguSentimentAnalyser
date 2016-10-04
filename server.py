@@ -1,12 +1,15 @@
 from flask import Flask, jsonify, render_template, request
 from flask_cors import CORS
+from posParser import calculateSentiment
+
 app = Flask(__name__)
 CORS(app)
 
 @app.route('/sentiment', methods = ['POST'])
 def get_sentiment():
-    print request.json['inputVar']
-    return jsonify({'data': 'Hello from server!!'})
+    sentence = request.json['input'].strip().split(' ')
+    sentiment = calculateSentiment().getSentiment(sentence)
+    return jsonify({'data': sentiment})
 
 @app.route('/')
 def index():
