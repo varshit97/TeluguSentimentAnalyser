@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Sentimental Analyser</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<link type="text/css" rel="stylesheet" href="static/jquery.percentageloader-0.1.css"></script>
+		<link type="text/css" rel="stylesheet" href="http://yui.yahooapis.com/pure/0.6.0/pure-min.css">
+	<style>
+		textarea
+		{
+			width: 200px;
+			height: 90px;
+			border-radius: 3px;
+			border: 1px solid #CCC;
+			padding: 8px;
+			font-weight: 200;
+			font-size: 15px;
+			font-family: Verdana;
+			box-shadow: 1px 1px 5px #CCC;
+		}
+	</style>
+	</head>
+	<body>
+		<script type="text/javascript" src="static/jquery-1.8.0.min.js"></script>
+		<script type="text/javascript" src="static/jsapi"></script>
+		<script type="text/javascript" src="static/jquery.percentageloader-0.1.js"></script>
+		<div style="text-align:center;">
+		<textarea id="transliterateTextarea" style="width:600px;height:200px">Enter the sentence</textarea>
+		<br/>
+		<input type="button" id="button" value="Compute Sentiment" class="pure-button pure-button-primary">
+		<br/>
+		<meter id="sentiment" value="0" min="-100" max="100" style="display:none;">2 out of 10</meter>
+		<br/>
+		<input id="sButton" type="button" value="Show Sentiment" style="display:none;">
+		<script type="text/javascript" charset="utf-8">
+			var sentiment = 0;
+			$("#sentiment").val(0);
+			var filling = 0;
+			var value = 1;
+			var interval = null;
+			$("#button").click(function(){
+				$("#sentiment").val(0);
+				filling = 0;
+				value = 1;
+				interval = null;
+				$.ajax({
+				    url: "http://127.0.0.1:5000/sentiment", 
+				    type: "POST",
+				    contentType: "application/json",
+				    data: JSON.stringify({'input': myFunc()}),
+				    success: function(data){ 
+						console.log(data['data']);
+						sentiment = data['data'] * 100;
+						console.log(sentiment);
+				    } 
+				});
+			});
+			function myFunc(){
+			  var val = document.getElementById('transliterateTextarea').value;
+			  console.log(val);
+			  return val;
+			}
+			function returnSentiment(){
+				return sentiment;
+			}
+			if(sentiment >= 0){
+				value = 1;
+			}
+			else{
+				value = -1;	
+			}
+			function fillBar(){
+				//console.log(sentiment, filling * 100, ' bye ', value);
+				$("#sentiment").val((filling).toString());
+				if(filling < sentiment && value > 0){
+					filling += value * 2.4;
+					console.log(value + ' ' + filling + " less");
+				}
+				if(filling > sentiment && value < 0){
+					filling += value * 2.4;
+					console.log(value + ' ' + filling + " less");
+				}
+				if(value > 0 && filling >= sentiment){
+					clearInterval(interval);
+				}
+				if(value < 0 && filling <= sentiment){
+					clearInterval(interval);
+				}
+			}
+			$("#sButton").click(function(){
+				interval = setInterval(fillBar, 100);
+			});
+			google.load("elements", "1", {
+				packages: "transliteration"
+			});
+		    function onLoad() {
+				var options = {
+				    sourceLanguage:
+				        [google.elements.transliteration.LanguageCode.ENGLISH],
+				    destinationLanguage:
+				        [google.elements.transliteration.LanguageCode.TELUGU],
+				    shortcutKey: 'ctrl+g',
+				    transliterationEnabled: true
+				};
+				var control = new google.elements.transliteration.TransliterationControl(options);
+				control.makeTransliteratable(['transliterateTextarea']);
+			}
+			google.setOnLoadCallback(onLoad);
+		</script>
+		<div id="container">
+			<div id="topLoader" style="margin-left:640px;"></div>
+			<br/>
+			<br/>
+			<button id="animateButton" class="pure-button pure-button-primary">Show Sentiment</button>
+			<script>
+				$(function(){
+		  		  var $topLoader = $("#topLoader").percentageLoader({width: 256,
+					  height: 256,
+					  controllable : false,
+					  progress : 0.001,
+					  onProgressUpdate : function(val){
+		  		      $topLoader.setValue(Math.round(val*100.0));
+		  		    }});
+		  		  var topLoaderRunning = false;
+		  		  $("#animateButton").click(function(){
+		  		    if(topLoaderRunning){
+						return;
+		  		    }
+		  		    topLoaderRunning = true;
+		  		    $topLoader.setProgress(0);
+		  		    var kb = 0;
+		  		    var totalKb = 100;
+		  		    var animateFunc = function(){
+		  		      kb += 1.7;
+		  		      $topLoader.setProgress(kb / totalKb);
+					  if(returnSentiment() >= 0){
+						  document.getElementById('type').innerHTML = 'pos';
+						  if(kb < returnSentiment()){
+							setTimeout(animateFunc, 25);
+		  		      	}
+					  }
+					  if(returnSentiment() < 0){
+						  document.getElementById('type').innerHTML = 'neg';
+						  if(kb > returnSentiment()){
+						  	setTimeout(animateFunc, 25);
+						  }
+					  }
+					  else{
+						  topLoaderRunning = false;
+		  		      }
+		  		    }
+		  		    setTimeout(animateFunc, 25);
+		  		  });
+		  		});
+			</script>
+		 </div>
+			<h3 id="type">POS OR NEG</h3>
+		</div>
+	</body>
+</html>
